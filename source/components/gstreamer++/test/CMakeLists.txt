@@ -1,0 +1,50 @@
+project(gstreamer++.test)
+
+include(setup_target_properties_library)
+include(show_target_properties)
+
+find_package(GTEST REQUIRED)
+
+message("Setting up gstreamer++.test")
+
+set(COMPONENTS_GSTREAMERPP_TEST_DEFINITIONS
+    CACHE INTERNAL "${PROJECT_NAME}: Definitions" FORCE)
+
+set(COMPONENTS_GSTREAMERPP_TEST_INCLUDE
+    include
+    ${GTEST_INCLUDE_DIR}
+    CACHE INTERNAL "${PROJECT_NAME}: Include Directories" FORCE)
+
+set(COMPONENTS_GSTREAMERPP_TEST_LIBS
+    gstreamer++
+    ${GTEST_LIBRARIES}
+    CACHE INTERNAL "${PROJECT_NAME}: Link libraries" FORCE)
+
+file(GLOB COMPONENTS_GSTREAMERPP_TEST_INCLUDES include/*.h)
+file(GLOB_RECURSE COMPONENTS_GSTREAMERPP_TEST_SOURCES src/*.cpp)
+
+#if (INSTALL_HEADERS_TO_TARGET)
+#    install(FILES ${COMPONENTS_GSTREAMERPP_TEST_INCLUDES} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/cppsdk/generics)
+#else()
+#    foreach(path ${CMAKE_FIND_ROOT_PATH})
+#        file(COPY ${COMPONENTS_GSTREAMERPP_TEST_INCLUDES} DESTINATION ${path}/usr/include/cppsdk/generics)
+#    endforeach()
+#endif()
+
+set(COMPONENTS_GSTREAMERPP_TEST_INPUT
+    ${COMPONENTS_GSTREAMERPP_TEST_SOURCES}
+    ${COMPONENTS_GSTREAMERPP_TEST_INCLUDES}
+    CACHE INTERNAL "${PROJECT_NAME}: Source files" FORCE)
+
+add_executable(${PROJECT_NAME} ${COMPONENTS_GSTREAMERPP_TEST_INPUT})
+target_compile_definitions(${PROJECT_NAME} PRIVATE ${COMPONENTS_GSTREAMERPP_TEST_DEFINITIONS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${COMPONENTS_GSTREAMERPP_TEST_INCLUDE})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${COMPONENTS_GSTREAMERPP_TEST_LIBS})
+set_target_properties(${PROJECT_NAME} PROPERTIES DEFINE_SYMBOL COMPONENTS_GSTREAMERPP_TEST)
+#set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${GSTREAMER_TEST_VERSION})
+
+setup_target_properties_library(${PROJECT_NAME})
+
+show_target_properties(${PROJECT_NAME})
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

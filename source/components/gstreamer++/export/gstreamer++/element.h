@@ -7,22 +7,26 @@
 #include <gstreamer++/pad.h>
 #include <gstreamer++/query.h>
 
+struct _GstElement;
+
 namespace GStreamer {
 
 enum class State
 {
+    VoidPending,
+    Null,
+    Ready,
     Paused,
     Playing
 };
 
-class Element : std::enable_shared_from_this<Element>
+class Element : public std::enable_shared_from_this<Element>
 {
 public:
     using Ptr = std::shared_ptr<Element>;
 
-    Element()
-    {
-    }
+    Element();
+    Element(_GstElement * elementInternal);
     virtual ~Element()
     {
     }
@@ -33,6 +37,10 @@ public:
     void OnReceiveMessage(Ptr origin, const Message & message);
     void OnReceiveEvent(Ptr origin, const Event & event);
     void OnReceiveQuery(Ptr origin, const Query & query);
+
+    std::string GetProperty(const char * name);
+
+    _GstElement * AsGstElement() { return _elementInternal; }
 
 protected:
     virtual void SendMessage(const Message & message)
@@ -53,8 +61,10 @@ private:
     Ptr _parent;
     std::vector<Pad::Ptr> _sinkPads;
     std::vector<Pad::Ptr> _sourcePads;
+    _GstElement * _elementInternal;
 };
 
 using ElementPtr = Element::Ptr;
+using ElementList = std::vector<ElementPtr>;
 
 } // namespace GStreamer

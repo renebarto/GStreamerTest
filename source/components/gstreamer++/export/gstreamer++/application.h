@@ -1,11 +1,13 @@
 #pragma once
 
 #include <gstreamer++/element.h>
+#include <gstreamer++/elementfactory.h>
 #include <gstreamer++/errorlist.h>
 #include <gstreamer++/event.h>
 #include <gstreamer++/message.h>
 #include <gstreamer++/pipeline.h>
 #include <gstreamer++/query.h>
+#include <gstreamer++/registry.h>
 
 namespace GStreamer {
 
@@ -62,6 +64,12 @@ public:
     bool IsRegistryForkEnabled();
     void SetRegistryForkEnabled(bool enabled);
     void UpdateRegistry();
+    RegistryPtr GetRegistry();
+
+    PipelinePtr CreatePipeline(const char * pipelineName);
+
+    ElementFactoryPtr GetElementFactory(const char * factoryName);
+    ElementPtr MakeElement(const char * factoryName, const char * elementName);
 
     void Send(Element::Ptr target, const Event & event);
     void Query(Element::Ptr target, const Query & query);

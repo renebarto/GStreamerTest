@@ -4,6 +4,8 @@
 #include <gstreamer++/bin.h>
 #include <gstreamer++/messagebus.h>
 
+struct _GstPipeline;
+
 namespace GStreamer {
 
 class Pipeline : public Bin
@@ -11,9 +13,8 @@ class Pipeline : public Bin
 public:
     using Ptr = std::shared_ptr<Pipeline>;
 
-    Pipeline()
-    {
-    }
+    Pipeline();
+    Pipeline(_GstPipeline * pipelineInternal);
     virtual ~Pipeline()
     {
     }
@@ -29,6 +30,7 @@ protected:
 private:
     std::thread _thread;
     MessageBus _messageBus;
+    _GstPipeline * _pipelineInternal;
 };
 
 using PipelinePtr = Pipeline::Ptr;

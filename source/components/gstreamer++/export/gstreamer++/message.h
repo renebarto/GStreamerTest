@@ -43,4 +43,19 @@ private:
     ElementPtr _origin;
 };
 
+class ErrorMessage : public Message
+{
+
+};
+
+class TagMessage : public Message
+{
+
+};
+
+class EosMessage : public Message
+{
+
+};
+
 } // namespace GStreamer

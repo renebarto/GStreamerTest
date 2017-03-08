@@ -17,6 +17,8 @@ public:
     }
 
 private:
+    // Sink / Source
+    // Caps
 };
 
 } // namespace GStreamer

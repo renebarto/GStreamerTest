@@ -146,3 +146,23 @@ bool Application::ParseApplicationParameters()
     g_option_context_free(context);
     return result;
 }
+
+RegistryPtr Application::GetRegistry()
+{
+    return std::make_shared<Registry>(gst_registry_get());
+}
+
+PipelinePtr Application::CreatePipeline(const char * pipelineName)
+{
+    return std::make_shared<Pipeline>(GST_PIPELINE(gst_pipeline_new(pipelineName)));
+}
+
+ElementFactoryPtr Application::GetElementFactory(const char * factoryName)
+{
+    return std::make_shared<ElementFactory>(gst_element_factory_find(factoryName));
+}
+
+ElementPtr Application::MakeElement(const char * factoryName, const char * elementName)
+{
+    return std::make_shared<Element>(gst_element_factory_make(factoryName, elementName));
+}

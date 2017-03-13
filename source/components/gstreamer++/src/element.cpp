@@ -7,13 +7,15 @@
 
 using namespace GStreamer;
 
-Element::Element()
-    : _parent()
-    , _sinkPads()
-    , _sourcePads()
-    , _elementInternal()
+template<>
+std::vector<EnumConversion<State>> EnumSerializationInfo<State>::Info =
 {
-}
+    { State::VoidPending, "Void" },
+    { State::Null, "Null" },
+    { State::Ready, "Ready" },
+    { State::Paused, "Paused" },
+    { State::Playing, "Playing" },
+};
 
 Element::Element(GstElement * elementInternal)
     : _parent()
@@ -23,6 +25,11 @@ Element::Element(GstElement * elementInternal)
 {
 }
 
+void Element::ChangeState(State state)
+{
+    gst_element_set_state(_elementInternal, GstState(state));
+}
+
 std::string Element::GetProperty(const char * name)
 {
     char * result = nullptr;
@@ -30,4 +37,9 @@ std::string Element::GetProperty(const char * name)
     std::string resultString = result;
     g_free(result);
     return resultString;
+}
+
+void Element::SetProperty(const char * name, const char * value)
+{
+    g_object_set(G_OBJECT(_elementInternal), name, value, nullptr);
 }

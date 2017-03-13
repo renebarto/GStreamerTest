@@ -13,7 +13,9 @@ class Registry
 public:
     using Ptr = std::shared_ptr<Registry>;
 
-    Registry();
+    Registry() = delete;
+    Registry(const Registry & other) = delete;
+    Registry & operator = (const Registry & other) = delete;
     Registry(_GstRegistry * registryInternal);
     virtual ~Registry()
     {

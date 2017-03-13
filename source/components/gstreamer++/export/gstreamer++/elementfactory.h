@@ -16,9 +16,9 @@ class ElementFactory : public std::enable_shared_from_this<ElementFactory>
 public:
     using Ptr = std::shared_ptr<ElementFactory>;
 
-    ElementFactory()
-    {
-    }
+    ElementFactory() = delete;
+    ElementFactory(const ElementFactory & other) = delete;
+    ElementFactory & operator = (const ElementFactory & other) = delete;
     ElementFactory(_GstElementFactory * factoryInternal);
     virtual ~ElementFactory()
     {

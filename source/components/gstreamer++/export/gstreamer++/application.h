@@ -1,5 +1,6 @@
 #pragma once
 
+#include <thread>
 #include <gstreamer++/element.h>
 #include <gstreamer++/elementfactory.h>
 #include <gstreamer++/errorlist.h>
@@ -8,6 +9,8 @@
 #include <gstreamer++/pipeline.h>
 #include <gstreamer++/query.h>
 #include <gstreamer++/registry.h>
+
+struct _GMainLoop;
 
 namespace GStreamer {
 
@@ -40,6 +43,9 @@ struct OptionEntry
 class Application
 {
 public:
+    Application() = delete;
+    Application(const Application & other) = delete;
+    Application & operator = (const Application & other) = delete;
     Application(int argc, const char * argv[]);
     Application(int argc, const char * argv[], std::vector<OptionEntry> parseOptions);
     void Initialize();
@@ -67,22 +73,29 @@ public:
     RegistryPtr GetRegistry();
 
     PipelinePtr CreatePipeline(const char * pipelineName);
+    BinPtr CreateBin(const char * binName);
 
     ElementFactoryPtr GetElementFactory(const char * factoryName);
     ElementPtr MakeElement(const char * factoryName, const char * elementName);
 
     void Send(Element::Ptr target, const Event & event);
     void Query(Element::Ptr target, const Query & query);
-    Message GetMessage() { return _pipeline->GetMessage(); }
+    MessagePtr GetMessage() { return _pipeline->GetMessage(); }
+
+    void Start();
+    void Stop();
+    void TriggerToStop();
+
+    virtual bool OnMessage(MessagePtr message);
 
 private:
     bool ParseApplicationParameters();
+    void Thread();
 
     static bool _initialized;
 
     int _argc;
     const char * * _argv;
-    std::thread _thread;
     Pipeline::Ptr _pipeline;
     unsigned _majorVersion;
     unsigned _minorVersion;
@@ -91,6 +104,9 @@ private:
     std::string applicationName;
     std::vector<OptionEntry> _parseOptions;
     bool _parseApplicationParameters;
+    std::thread _thread;
+    _GMainLoop * _loop;
+    BusWatchID _busWatchID;
 };
 
 } // namespace GStreamer

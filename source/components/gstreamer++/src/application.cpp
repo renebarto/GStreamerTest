@@ -5,14 +5,16 @@
 #include <sstream>
 #include <gst/gst.h>
 
+using namespace std;
 using namespace GStreamer;
 
 bool Application::_initialized = false;
 
+static int BusCallback(GstBus * bus, GstMessage * message, void * data);
+
 Application::Application(int argc, const char * argv[])
     : _argc(argc)
     , _argv(argv)
-    , _thread()
     , _pipeline(nullptr)
     , _majorVersion()
     , _minorVersion()
@@ -20,6 +22,9 @@ Application::Application(int argc, const char * argv[])
     , _nanoVersion()
     , _parseOptions()
     , _parseApplicationParameters(false)
+    , _thread()
+    , _loop(nullptr)
+    , _busWatchID()
 {
     guint major, minor, micro, nano;
 
@@ -137,7 +142,7 @@ bool Application::ParseApplicationParameters()
     GError * err = nullptr;
 
     bool result = true;
-    if (!g_option_context_parse (context, &_argc, const_cast<char ***>(&_argv), &err))
+    if (!g_option_context_parse(context, &_argc, const_cast<char ***>(&_argv), &err))
     {
         std::cout << "Failed to initialize: " << err->message << std::endl;
         g_clear_error(&err);
@@ -154,7 +159,14 @@ RegistryPtr Application::GetRegistry()
 
 PipelinePtr Application::CreatePipeline(const char * pipelineName)
 {
-    return std::make_shared<Pipeline>(GST_PIPELINE(gst_pipeline_new(pipelineName)));
+    PipelinePtr pipeline = std::make_shared<Pipeline>(GST_PIPELINE(gst_pipeline_new(pipelineName)));
+    _busWatchID = pipeline->GetBus()->AddWatch(BusCallback, this);
+    return pipeline;
+}
+
+BinPtr Application::CreateBin(const char * binName)
+{
+    return std::make_shared<Bin>(GST_BIN(gst_bin_new(binName)));
 }
 
 ElementFactoryPtr Application::GetElementFactory(const char * factoryName)
@@ -166,3 +178,64 @@ ElementPtr Application::MakeElement(const char * factoryName, const char * eleme
 {
     return std::make_shared<Element>(gst_element_factory_make(factoryName, elementName));
 }
+
+
+void Application::Thread()
+{
+    _loop = g_main_loop_new(nullptr, FALSE);
+    g_main_loop_run(_loop);
+}
+
+void Application::Start()
+{
+    _thread = std::thread(std::bind(&Application::Thread, this));
+}
+
+void Application::TriggerToStop()
+{
+    if (_loop != nullptr)
+        g_main_loop_quit(_loop);
+}
+
+void Application::Stop()
+{
+    TriggerToStop();
+    _thread.join();
+    g_source_remove(_busWatchID);
+    g_main_loop_unref(_loop);
+    _loop = nullptr;
+    _busWatchID = {};
+}
+
+bool Application::OnMessage(MessagePtr message)
+{
+    cout << "Got " << message->GetTypeName() << " message" << endl;
+    switch (message->GetType())
+    {
+        case MessageType::Error:
+        {
+            cerr << "Error: " <<  message->GetContents() << " (" << message->GetDebugInfo() << ")" << endl;
+            TriggerToStop();
+            break;
+        }
+        case MessageType::EOS:
+            // end-of-stream
+            TriggerToStop();
+            break;
+        default:
+            // unhandled message
+            break;
+    }
+    // we want to be notified again the next time there is a message
+    // on the bus, so returning true (false means we want to stop watching
+    // for messages on the bus and our callback should not be called again)
+    return true;
+}
+
+static int BusCallback(GstBus * bus __attribute__((unused)), GstMessage * message, void * data)
+{
+    Application * pThis = reinterpret_cast<Application *>(data);
+
+    return pThis->OnMessage(std::make_shared<Message>(message)) ? TRUE : FALSE;
+}
+
